@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Smart(I&II)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* ── Theme Variables ────────────────────────────── */
+        :root[data-theme="dark"] {
+            --bg:             #0a0a0a;
+            --surface:        #141414;
+            --surface-hover:  #1a1a1a;
+            --text:           #e5e5e5;
+            --text-muted:     #737373;
+            --border:         #262626;
+            --accent:         #404040;
+            --header-bg:      rgba(10, 10, 10, 0.95);
+            --footer-bg:      rgba(10, 10, 10, 0.90);
+            --toggle-bg:      #1e1e1e;
+            --toggle-border:  #333333;
+            --toggle-text:    #a0a0a0;
+        }
+
+        :root[data-theme="light"] {
+            --bg:             #f7f7f7;
+            --surface:        #ffffff;
+            --surface-hover:  #f0f0f0;
+            --text:           #111111;
+            --text-muted:     #888888;
+            --border:         #e0e0e0;
+            --accent:         #b0b0b0;
+            --header-bg:      rgba(247, 247, 247, 0.95);
+            --footer-bg:      rgba(247, 247, 247, 0.92);
+            --toggle-bg:      #ebebeb;
+            --toggle-border:  #d0d0d0;
+            --toggle-text:    #555555;
+        }
+
+        /* ── Base ───────────────────────────────────────── */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+            min-height: 100vh;
+            transition: background 0.35s ease, color 0.35s ease;
+        }
+
+        /* ── Theme Toggle Button ────────────────────────── */
+        #themeToggle {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 13px 6px 10px;
+            border-radius: 50px;
+            border: 1.5px solid var(--toggle-border);
+            background: var(--toggle-bg);
+            color: var(--toggle-text);
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 0.03em;
+            cursor: pointer;
+            user-select: none;
+            outline: none;
+            -webkit-tap-highlight-color: transparent;
+            transition: background 0.3s, border-color 0.3s, color 0.3s, box-shadow 0.2s;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        #themeToggle:hover {
+            box-shadow: 0 0 0 2px var(--accent);
+            color: var(--text);
+        }
+
+        #themeToggle:active {
+            opacity: 0.8;
+        }
+
+        #themeToggle .t-icon {
+            font-size: 1rem;
+            line-height: 1;
+            transition: transform 0.4s ease;
+        }
+
+        #themeToggle:active .t-icon {
+            transform: rotate(20deg) scale(1.15);
+        }
+
+        /* ── Header ─────────────────────────────────────── */
+        .header {
+            position: sticky;
+            top: 0;
+            background: var(--header-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            z-index: 100;
+            transition: all 0.3s ease;
+            padding: 40px 20px 20px;
+        }
+
+        .header.shrunk {
+            padding: 10px 20px;
+        }
+
+        .header-content {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .header-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .header.shrunk .header-top {
+            margin-bottom: 0;
+            height: 0;
+            overflow: hidden;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 500;
+            letter-spacing: -0.02em;
+            color: var(--text);
+            transition: color 0.35s ease;
+        }
+
+        .search-wrapper {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 14px 20px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--surface);
+            color: var(--text);
+            font-size: 16px;
+            outline: none;
+            transition: background 0.3s, border-color 0.3s, color 0.3s, padding 0.3s, font-size 0.3s, box-shadow 0.2s;
+        }
+
+        .header.shrunk .search-input {
+            padding: 10px 16px;
+            font-size: 14px;
+        }
+
+        .search-input:focus {
+            border-color: var(--accent);
+            background: var(--surface-hover);
+            box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 30%, transparent);
+        }
+
+        .search-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        /* ── Container ──────────────────────────────────── */
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .stats {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: color 0.35s ease;
+        }
+
+        .vocab-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding-bottom: 100px;
+        }
+
+        /* ── Word Card ──────────────────────────────────── */
+        .word-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            cursor: pointer;
+            transition: background 0.25s ease, border-color 0.25s ease;
+            position: relative;
+        }
+
+        .word-card:hover {
+            background: var(--surface-hover);
+            border-color: var(--accent);
+        }
+
+        .word-card.expanded {
+            border-color: var(--text-muted);
+        }
+
+        .word-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .word-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .word-index {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-family: monospace;
+            transition: color 0.35s ease;
+        }
+
+        .speak-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s, background 0.2s;
+            font-size: 1rem;
+            line-height: 1;
+        }
+
+        .speak-btn:hover {
+            color: var(--text);
+            background: var(--bg);
+        }
+
+        .speak-btn:active {
+            transform: scale(0.95);
+        }
+
+        .word-en {
+            font-size: 1.25rem;
+            font-weight: 500;
+            color: var(--text);
+            margin-bottom: 4px;
+            transition: color 0.35s ease;
+        }
+
+        .word-bn {
+            font-size: 1rem;
+            color: var(--text-muted);
+            font-family: "Noto Sans Bengali", sans-serif;
+            transition: color 0.35s ease;
+        }
+
+        .expand-icon {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            transition: transform 0.2s ease, color 0.35s ease;
+        }
+
+        .word-card.expanded .expand-icon {
+            transform: rotate(180deg);
+        }
+
+        .sentences-container {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, opacity 0.2s ease;
+            opacity: 0;
+        }
+
+        .word-card.expanded .sentences-container {
+            max-height: 1200px;
+            opacity: 1;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .sentences-title {
+            font-size: 0.625rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            font-weight: 500;
+            transition: color 0.35s ease;
+        }
+
+        .sentence-item {
+            margin-bottom: 12px;
+            padding-left: 12px;
+            border-left: 2px solid var(--border);
+            transition: border-color 0.35s ease;
+        }
+
+        .sentence-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .sentence-text {
+            font-size: 0.9375rem;
+            color: var(--text);
+            line-height: 1.6;
+            font-style: italic;
+            transition: color 0.35s ease;
+        }
+
+        /* ── Meaning block ──────────────────────────────── */
+        .detail-block {
+            margin-bottom: 16px;
+        }
+
+        .detail-block:last-child {
+            margin-bottom: 0;
+        }
+
+        .meaning-text {
+            font-size: 0.9375rem;
+            color: var(--text);
+            line-height: 1.6;
+            transition: color 0.35s ease;
+        }
+
+        /* ── Synonym chips ──────────────────────────────── */
+        .synonym-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .synonym-chip {
+            font-size: 0.8125rem;
+            padding: 4px 10px;
+            border-radius: 50px;
+            border: 1px solid var(--border);
+            background: var(--bg);
+            color: var(--text);
+            transition: background 0.35s ease, border-color 0.35s ease, color 0.35s ease;
+        }
+
+        /* ── Footer ─────────────────────────────────────── */
+        .author {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--footer-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-top: 1px solid var(--border);
+            padding: 12px;
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            z-index: 50;
+            transition: background 0.35s ease, border-color 0.35s ease, color 0.35s ease;
+        }
+
+        .author a {
+            color: var(--text);
+            text-decoration: none;
+            border-bottom: 1px solid var(--accent);
+            transition: border-color 0.2s, color 0.2s;
+        }
+
+        .author a:hover {
+            border-bottom-color: var(--text);
+        }
+
+        /* ── Empty State ────────────────────────────────── */
+        .empty {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        /* ── Responsive ─────────────────────────────────── */
+        @media (max-width: 640px) {
+            .header {
+                padding: 30px 16px 16px;
+            }
+            .container {
+                padding: 16px;
+            }
+        }
+
+        @media (max-width: 420px) {
+            #themeToggle .t-label {
+                display: none;
+            }
+            #themeToggle {
+                padding: 6px 9px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header" id="header">
+        <div class="header-content">
+            <div class="header-top">
+                <h1>Word Smart(I&II)</h1>
+                <button id="themeToggle" title="Toggle theme" onclick="toggleTheme()">
+                    <span class="t-icon" id="tIcon">☀️</span>
+                    <span class="t-label" id="tLabel">Day Mode</span>
+                </button>
+            </div>
+            <div class="search-wrapper">
+                <input type="text" class="search-input" id="searchInput" placeholder="Search word, index, or range (e.g., 1-3)...">
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="stats" id="stats">Loading...</div>
+        <div class="vocab-list" id="vocabListContainer"></div>
+    </main>
+
+    <footer class="author">
+        Created by <a href="https://plabonkumersarker.github.io/profile" target="_blank">Plabon Kumer Sarker</a>
+    </footer>
+
+    <script src="potato.js"></script>
+    <script>
+        /* ── Theme System ────────────────────────────────── */
+        const html   = document.documentElement;
+        const tIcon  = document.getElementById("tIcon");
+        const tLabel = document.getElementById("tLabel");
+
+        function applyTheme(theme) {
+            html.setAttribute("data-theme", theme);
+            if (theme === "dark") {
+                tIcon.textContent  = "☀️";
+                tLabel.textContent = "Day Mode";
+            } else {
+                tIcon.textContent  = "🌙";
+                tLabel.textContent = "Night Mode";
+            }
+            localStorage.setItem("vocab-theme", theme);
+        }
+
+        function toggleTheme() {
+            applyTheme(html.getAttribute("data-theme") === "dark" ? "light" : "dark");
+        }
+
+        const savedTheme = localStorage.getItem("vocab-theme");
+        if (savedTheme) applyTheme(savedTheme);
+
+        /* ── Normalize data ──────────────────────────────── */
+        /* Handles both array data and dictionary/id-keyed object data.
+           VOCAB is what the rest of the app reads from. */
+        let VOCAB = [];
+
+        if (typeof vocabList === 'undefined') {
+            document.getElementById('stats').textContent = 'Error: vocabList data missing';
+            document.getElementById('vocabListContainer').innerHTML =
+                '<div class="empty">No vocabulary data found in the script.</div>';
+            throw new Error('vocabList is undefined');
+        } else if (Array.isArray(vocabList)) {
+            VOCAB = vocabList;
+        } else {
+            VOCAB = Object.entries(vocabList).map(([key, value]) => ({
+                id: value.id !== undefined ? value.id : parseInt(key, 10),
+                ...value
+            }));
+        }
+
+        /* ── Scroll Shrink ───────────────────────────────── */
+        window.addEventListener('scroll', () => {
+            document.getElementById('header').classList.toggle('shrunk', window.scrollY > 50);
+        });
+
+        /* ── TTS ─────────────────────────────────────────── */
+        function speakWord(word) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(word);
+                utterance.lang = 'en-US';
+                utterance.rate = 0.9;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        /* ── Search Helpers ──────────────────────────────── */
+        function isRangeSearch(s) { return /^\d+\s*-\s*\d+$/.test(s); }
+
+        function parseRange(s) {
+            const parts = s.split('-').map(p => parseInt(p.trim()));
+            return { start: Math.min(parts[0], parts[1]), end: Math.max(parts[0], parts[1]) };
+        }
+
+        /* ── Render (lazy / batched) ─────────────────────── */
+        const BATCH_SIZE = 60;
+        let filteredData = [];
+        let renderedCount = 0;
+        let observer = null;
+
+        function renderList() {
+            const search    = document.getElementById('searchInput').value.trim();
+            const searchLow = search.toLowerCase();
+
+            if (isRangeSearch(search)) {
+                const { start, end } = parseRange(search);
+                filteredData = VOCAB.filter(item => item.id >= start && item.id <= end);
+            } else {
+                filteredData = VOCAB.filter(item => {
+                    if (!search) return true;
+                    const banglaMatch = (item.bangla_meanings || []).some(b => b.includes(search));
+                    return item.word.toLowerCase().includes(searchLow) ||
+                           banglaMatch ||
+                           item.id.toString().includes(search);
+                });
+            }
+
+            document.getElementById('stats').textContent = `${filteredData.length} words`;
+
+            const list = document.getElementById('vocabListContainer');
+            list.innerHTML = '';
+            renderedCount = 0;
+
+            if (filteredData.length === 0) {
+                list.innerHTML = '<div class="empty">No words found</div>';
+                if (observer) observer.disconnect();
+                return;
+            }
+
+            renderNextBatch();
+            setupInfiniteScroll();
+        }
+
+        function renderNextBatch() {
+            const list  = document.getElementById('vocabListContainer');
+            const slice = filteredData.slice(renderedCount, renderedCount + BATCH_SIZE);
+            if (slice.length === 0) return;
+
+            // Build all cards off-DOM first, then attach once — avoids
+            // triggering a reflow per card.
+            const fragment = document.createDocumentFragment();
+
+            slice.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'word-card';
+                card.dataset.id = item.id;
+                card.innerHTML = `
+                    <div class="word-header">
+                        <div class="word-meta">
+                            <span class="word-index">#${item.id}</span>
+                            <button class="speak-btn" title="Listen" onclick="event.stopPropagation(); speakWord('${escapeAttr(item.word)}')">🔊</button>
+                        </div>
+                        <span class="expand-icon">▼</span>
+                    </div>
+                    <div class="word-en">${item.word}</div>
+                    <div class="word-bn">${(item.bangla_meanings || []).join(', ')}</div>
+                    <div class="sentences-container" id="detail-${item.id}">
+                        ${getMeaningHTML(item)}
+                        ${getSynonymsHTML(item)}
+                        ${getSentencesHTML(item)}
+                    </div>
+                `;
+                card.addEventListener('click', () => toggleCard(card));
+                fragment.appendChild(card);
+            });
+
+            list.appendChild(fragment);
+            renderedCount += slice.length;
+        }
+
+        function setupInfiniteScroll() {
+            if (observer) observer.disconnect();
+
+            // Remove any existing sentinel, then add a fresh one at the
+            // bottom of the list. When it scrolls into view, load the
+            // next batch of cards.
+            const old = document.getElementById('scrollSentinel');
+            if (old) old.remove();
+
+            if (renderedCount >= filteredData.length) return; // everything already rendered
+
+            const sentinel = document.createElement('div');
+            sentinel.id = 'scrollSentinel';
+            sentinel.style.height = '1px';
+            document.getElementById('vocabListContainer').appendChild(sentinel);
+
+            observer = new IntersectionObserver((entries) => {
+                if (entries[0].isIntersecting) {
+                    renderNextBatch();
+                    sentinel.remove();
+                    if (renderedCount < filteredData.length) {
+                        document.getElementById('vocabListContainer').appendChild(sentinel);
+                    } else {
+                        observer.disconnect();
+                    }
+                }
+            }, { rootMargin: '400px' }); // start loading a bit before it's visible
+
+            observer.observe(sentinel);
+        }
+
+        function escapeAttr(str) {
+            return String(str).replace(/'/g, "\\'");
+        }
+
+        function getMeaningHTML(item) {
+            if (!item.meaning) return '';
+            return `
+                <div class="detail-block">
+                    <div class="sentences-title">Meaning</div>
+                    <div class="meaning-text">${item.meaning}</div>
+                </div>
+            `;
+        }
+
+        function getSynonymsHTML(item) {
+            if (!item.synonyms || item.synonyms.length === 0) return '';
+            const chips = item.synonyms.map(s => `<span class="synonym-chip">${s}</span>`).join('');
+            return `
+                <div class="detail-block">
+                    <div class="sentences-title">Synonyms</div>
+                    <div class="synonym-list">${chips}</div>
+                </div>
+            `;
+        }
+
+        function getSentencesHTML(item) {
+            if (!item.sentences || item.sentences.length === 0) return '';
+            const sentences = item.sentences.map(s => `
+                <div class="sentence-item">
+                    <div class="sentence-text">"${s}"</div>
+                </div>
+            `).join('');
+            return `
+                <div class="detail-block">
+                    <div class="sentences-title">Examples</div>
+                    ${sentences}
+                </div>
+            `;
+        }
+
+        function toggleCard(card) {
+            const isExpanded = card.classList.contains('expanded');
+            document.querySelectorAll('.word-card.expanded').forEach(c => {
+                if (c !== card) c.classList.remove('expanded');
+            });
+            card.classList.toggle('expanded', !isExpanded);
+        }
+
+        document.getElementById('searchInput').addEventListener('input', renderList);
+        renderList();
+    </script>
+</body>
+</html>
